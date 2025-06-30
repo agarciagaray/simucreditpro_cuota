@@ -30,11 +30,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
-const UserForm = ({ user, onSave, onCancel }: { user?: User, onSave: (user: User) => void, onCancel: () => void }) => {
+const UserForm = ({ user, onSave, onCancel }: { user?: User, onSave: (data: Omit<User, 'id'> & { id?: string }) => void, onCancel: () => void }) => {
     const [formData, setFormData] = useState({
         name: user?.name || '',
         username: user?.username || '',
+        password: '',
         role: user?.role || 'USER',
     });
 
@@ -43,7 +45,13 @@ const UserForm = ({ user, onSave, onCancel }: { user?: User, onSave: (user: User
     };
 
     const handleSave = () => {
-        onSave({ id: user?.id || '', ...formData });
+        const dataToSave: Omit<User, 'id'> & { id?: string } = {
+            ...formData,
+        };
+        if (user?.id) {
+            dataToSave.id = user.id;
+        }
+        onSave(dataToSave);
     };
 
     return (
@@ -55,6 +63,10 @@ const UserForm = ({ user, onSave, onCancel }: { user?: User, onSave: (user: User
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="username" className="text-right">Username</Label>
                 <Input id="username" value={formData.username} onChange={e => handleChange('username', e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="password" className="text-right">Contraseña</Label>
+                <Input id="password" type="password" value={formData.password} onChange={e => handleChange('password', e.target.value)} className="col-span-3" placeholder={user ? 'Dejar en blanco para no cambiar' : ''} />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="role" className="text-right">Rol</Label>
@@ -80,6 +92,7 @@ export function UsersPanel() {
     const { users, isLoaded, addUser, updateUser, deleteUser } = useUsers();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
+    const { toast } = useToast();
 
     if (!isLoaded) {
         return (
@@ -99,12 +112,29 @@ export function UsersPanel() {
         setIsFormOpen(true);
     };
 
-    const handleSaveUser = (userData: User) => {
+    const handleSaveUser = (userData: Omit<User, 'id'> & { id?: string, password?: string }) => {
         if (editingUser) {
-            updateUser(userData.id, userData);
+            const finalUserData: User = {
+                ...editingUser,
+                name: userData.name,
+                username: userData.username,
+                role: userData.role,
+                // Only update password if a new one was provided
+                password: userData.password ? userData.password : editingUser.password,
+            };
+            updateUser(editingUser.id, finalUserData);
         } else {
+            // Creating a new user
+            if (!userData.password) {
+                toast({
+                    title: "Error de validación",
+                    description: "La contraseña es obligatoria para nuevos usuarios.",
+                    variant: "destructive",
+                });
+                return;
+            }
             const { id, ...newUserData } = userData;
-            addUser(newUserData);
+            addUser(newUserData as Omit<User, 'id'>);
         }
         setIsFormOpen(false);
         setEditingUser(undefined);

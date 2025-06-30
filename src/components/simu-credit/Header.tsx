@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LineChart, Settings, Users, Calculator, ChevronDown } from 'lucide-react';
+import { LineChart, Settings, Users, Calculator, ChevronDown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -7,14 +7,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useAppContext } from '@/context/AppContext';
 
-type HeaderProps = {
-    role: 'USER' | 'ADMIN';
-    toggleRole: () => void;
-};
+export function Header() {
+    const { currentUser, logout } = useAppContext();
 
-export function Header({ role, toggleRole }: HeaderProps) {
-    const username = "Juan Pérez";
+    if (!currentUser) return null;
+
+    const { name, role } = currentUser;
 
     return (
         <header className="bg-primary text-primary-foreground shadow-lg">
@@ -25,7 +25,7 @@ export function Header({ role, toggleRole }: HeaderProps) {
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden sm:block">
-                      <p className="text-sm">Bienvenido, <span className="font-semibold">{username}</span></p>
+                      <p className="text-sm">Bienvenido, <span className="font-semibold">{name}</span></p>
                       <p className="text-xs text-primary-foreground/80">Rol Actual: {role}</p>
                     </div>
 
@@ -57,8 +57,9 @@ export function Header({ role, toggleRole }: HeaderProps) {
                         </DropdownMenu>
                     )}
                     
-                    <Button onClick={toggleRole} className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground">
-                        Cambiar Rol
+                    <Button onClick={logout} variant="destructive" className="bg-red-500 hover:bg-red-600 text-white">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Cerrar Sesión
                     </Button>
                 </div>
             </div>
