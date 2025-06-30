@@ -1,4 +1,6 @@
 export interface CreditProfile {
+  id: string;
+  name: string;
   tasa: number;
   afianzamiento: number;
   diasCarencia: number;

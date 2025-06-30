@@ -72,8 +72,8 @@ export function SimulatorForm({ profiles, onSubmit, isLoading }: SimulatorFormPr
                                 <SelectValue placeholder="Seleccione un perfil" />
                             </SelectTrigger>
                             <SelectContent>
-                                {Object.keys(profiles).map(key => (
-                                    <SelectItem key={key} value={key}>Perfil {key}</SelectItem>
+                                {Object.values(profiles).map(profile => (
+                                    <SelectItem key={profile.id} value={profile.id}>{profile.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
