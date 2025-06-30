@@ -19,7 +19,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { users, isLoaded: usersAreLoaded } = useUsers();
 
     useEffect(() => {
-        if (!usersAreLoaded) return;
+        if (!usersAreLoaded || Object.keys(users).length === 0) return;
 
         try {
             const savedUserJson = sessionStorage.getItem('currentUser');
