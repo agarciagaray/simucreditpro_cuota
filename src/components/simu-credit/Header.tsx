@@ -57,7 +57,7 @@ export function Header() {
                         </DropdownMenu>
                     )}
                     
-                    <Button onClick={logout} variant="destructive" className="bg-red-500 hover:bg-red-600 text-white">
+                    <Button onClick={logout} variant="destructive">
                         <LogOut className="mr-2 h-4 w-4" />
                         Cerrar Sesión
                     </Button>
