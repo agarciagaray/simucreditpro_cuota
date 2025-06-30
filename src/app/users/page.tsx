@@ -1,14 +1,16 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { Users, ShieldAlert } from 'lucide-react';
+import React from 'react';
 import { useAppContext } from '@/context/AppContext';
+import { UsersPanel } from '@/components/simu-credit/UsersPanel';
+import { ShieldAlert } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function UsersPage() {
     const { role } = useAppContext();
-    
+
     if (role === 'USER') {
         return (
             <Card className="m-auto max-w-md">
@@ -27,22 +29,6 @@ export default function UsersPage() {
             </Card>
         );
     }
-
-    return (
-        <Card className="m-auto max-w-lg">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Users />
-                    Gestión de Usuarios
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p>Esta sección está en construcción.</p>
-                <p className="text-muted-foreground text-sm mt-2">Aquí podrá gestionar los usuarios de la aplicación en el futuro.</p>
-                 <Button asChild className="mt-4">
-                    <Link href="/">Volver al Simulador</Link>
-                </Button>
-            </CardContent>
-        </Card>
-    );
+    
+    return <UsersPanel />;
 }

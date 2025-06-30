@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { CreditProfile } from '@/types';
-import { useCreditProfiles } from '@/hooks/use-credit-profiles';
+import type { User } from '@/types';
+import { useUsers } from '@/hooks/use-users';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Settings, PlusCircle, Edit, Trash2, Save, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Users as UsersIcon, PlusCircle, Edit, Trash2, Save, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,23 +29,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const ProfileForm = ({ profile, onSave, onCancel }: { profile?: CreditProfile, onSave: (profile: CreditProfile) => void, onCancel: () => void }) => {
+const UserForm = ({ user, onSave, onCancel }: { user?: User, onSave: (user: User) => void, onCancel: () => void }) => {
     const [formData, setFormData] = useState({
-        name: profile?.name || '',
-        tasa: profile?.tasa || 0,
-        afianzamiento: profile?.afianzamiento || 0,
-        diasCarencia: profile?.diasCarencia || 0,
-        seguro: profile?.seguro || 0,
-        corredor: profile?.corredor || 0,
+        name: user?.name || '',
+        username: user?.username || '',
+        role: user?.role || 'USER',
     });
 
     const handleChange = (field: keyof typeof formData, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: field === 'name' ? value : parseFloat(value) || 0 }));
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleSave = () => {
-        onSave({ id: profile?.id || '', ...formData });
+        onSave({ id: user?.id || '', ...formData });
     };
 
     return (
@@ -54,24 +53,20 @@ const ProfileForm = ({ profile, onSave, onCancel }: { profile?: CreditProfile, o
                 <Input id="name" value={formData.name} onChange={e => handleChange('name', e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tasa" className="text-right">Tasa N.M.V (%)</Label>
-                <Input id="tasa" type="number" step="0.00001" value={formData.tasa} onChange={e => handleChange('tasa', e.target.value)} className="col-span-3" />
+                <Label htmlFor="username" className="text-right">Username</Label>
+                <Input id="username" value={formData.username} onChange={e => handleChange('username', e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="afianzamiento" className="text-right">Afianzamiento (%)</Label>
-                <Input id="afianzamiento" type="number" step="0.00001" value={formData.afianzamiento} onChange={e => handleChange('afianzamiento', e.target.value)} className="col-span-3" />
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="diasCarencia" className="text-right">Int. Carencia (días)</Label>
-                <Input id="diasCarencia" type="number" step="1" value={formData.diasCarencia} onChange={e => handleChange('diasCarencia', e.target.value)} className="col-span-3" />
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="seguro" className="text-right">Seguro (%)</Label>
-                <Input id="seguro" type="number" step="0.00001" value={formData.seguro} onChange={e => handleChange('seguro', e.target.value)} className="col-span-3" />
-            </div>
-             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="corredor" className="text-right">Corredor (%)</Label>
-                <Input id="corredor" type="number" step="0.00001" value={formData.corredor} onChange={e => handleChange('corredor', e.target.value)} className="col-span-3" />
+                <Label htmlFor="role" className="text-right">Rol</Label>
+                <Select value={formData.role} onValueChange={(value: 'USER' | 'ADMIN') => handleChange('role', value)}>
+                    <SelectTrigger id="role" className="col-span-3">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="USER">Usuario</SelectItem>
+                        <SelectItem value="ADMIN">Administrador</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <DialogFooter>
                 <Button variant="outline" onClick={onCancel}>Cancelar</Button>
@@ -81,10 +76,10 @@ const ProfileForm = ({ profile, onSave, onCancel }: { profile?: CreditProfile, o
     );
 };
 
-export function ProfilesPanel() {
-    const { profiles, isLoaded, addProfile, updateProfile, deleteProfile } = useCreditProfiles();
+export function UsersPanel() {
+    const { users, isLoaded, addUser, updateUser, deleteUser } = useUsers();
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingProfile, setEditingProfile] = useState<CreditProfile | undefined>(undefined);
+    const [editingUser, setEditingUser] = useState<User | undefined>(undefined);
 
     if (!isLoaded) {
         return (
@@ -94,52 +89,52 @@ export function ProfilesPanel() {
         );
     }
     
-    const handleEditClick = (profile: CreditProfile) => {
-        setEditingProfile(profile);
+    const handleEditClick = (user: User) => {
+        setEditingUser(user);
         setIsFormOpen(true);
     };
     
     const handleAddNewClick = () => {
-        setEditingProfile(undefined);
+        setEditingUser(undefined);
         setIsFormOpen(true);
     };
 
-    const handleSaveProfile = (profileData: CreditProfile) => {
-        if (editingProfile) {
-            updateProfile(profileData.id, profileData);
+    const handleSaveUser = (userData: User) => {
+        if (editingUser) {
+            updateUser(userData.id, userData);
         } else {
-            const { id, ...newProfileData } = profileData;
-            addProfile(newProfileData);
+            const { id, ...newUserData } = userData;
+            addUser(newUserData);
         }
         setIsFormOpen(false);
-        setEditingProfile(undefined);
+        setEditingUser(undefined);
     };
 
-    const handleDeleteProfile = (profileId: string) => {
-        deleteProfile(profileId);
+    const handleDeleteUser = (userId: string) => {
+        deleteUser(userId);
     };
 
     return (
         <Card className="fade-in shadow-md">
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-6 w-6" />
-                    Configuración de Perfiles de Crédito
+                    <UsersIcon className="h-6 w-6" />
+                    Gestión de Usuarios
                 </CardTitle>
                 <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
                     <DialogTrigger asChild>
                          <Button onClick={handleAddNewClick}>
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Añadir Perfil
+                            Añadir Usuario
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                            <DialogTitle>{editingProfile ? 'Editar Perfil' : 'Añadir Nuevo Perfil'}</DialogTitle>
+                            <DialogTitle>{editingUser ? 'Editar Usuario' : 'Añadir Nuevo Usuario'}</DialogTitle>
                         </DialogHeader>
-                        <ProfileForm 
-                          profile={editingProfile}
-                          onSave={handleSaveProfile}
+                        <UserForm 
+                          user={editingUser}
+                          onSave={handleSaveUser}
                           onCancel={() => setIsFormOpen(false)}
                         />
                     </DialogContent>
@@ -151,25 +146,23 @@ export function ProfilesPanel() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Nombre</TableHead>
-                                <TableHead>Tasa %</TableHead>
-                                <TableHead>Afian. %</TableHead>
-                                <TableHead>Carencia</TableHead>
-                                <TableHead>Seguro %</TableHead>
-                                <TableHead>Corredor %</TableHead>
+                                <TableHead>Username</TableHead>
+                                <TableHead>Rol</TableHead>
                                 <TableHead className="text-right">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {Object.values(profiles).map((profile) => (
-                                <TableRow key={profile.id}>
-                                    <TableCell className="font-medium">{profile.name}</TableCell>
-                                    <TableCell>{profile.tasa}</TableCell>
-                                    <TableCell>{profile.afianzamiento}</TableCell>
-                                    <TableCell>{profile.diasCarencia}</TableCell>
-                                    <TableCell>{profile.seguro}</TableCell>
-                                    <TableCell>{profile.corredor}</TableCell>
+                            {Object.values(users).map((user) => (
+                                <TableRow key={user.id}>
+                                    <TableCell className="font-medium">{user.name}</TableCell>
+                                    <TableCell>{user.username}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={user.role === 'ADMIN' ? 'destructive' : 'secondary'}>
+                                            {user.role}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell className="text-right space-x-2">
-                                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(profile)}>
+                                        <Button variant="ghost" size="icon" onClick={() => handleEditClick(user)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <AlertDialog>
@@ -182,12 +175,12 @@ export function ProfilesPanel() {
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        Esta acción no se puede deshacer. Se eliminará permanentemente el perfil.
+                                                        Esta acción no se puede deshacer. Se eliminará permanentemente el usuario.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteProfile(profile.id)} className="bg-destructive hover:bg-destructive/90">
+                                                    <AlertDialogAction onClick={() => handleDeleteUser(user.id)} className="bg-destructive hover:bg-destructive/90">
                                                         Eliminar
                                                     </AlertDialogAction>
                                                 </AlertDialogFooter>

@@ -36,3 +36,14 @@ export interface SimulationResult {
   amortization: AmortizationRow[];
   tipoSeguro: 'inicial' | 'saldo';
 }
+
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  role: 'USER' | 'ADMIN';
+}
+
+export interface Users {
+  [key: string]: User;
+}
