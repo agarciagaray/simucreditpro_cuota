@@ -13,10 +13,10 @@ export function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { login } = useAppContext();
-    const [year, setYear] = useState<number | null>(null);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        setYear(new Date().getFullYear());
+        setIsClient(true);
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -76,7 +76,7 @@ export function LoginPage() {
                 </CardContent>
                 <CardFooter>
                     <p className="text-xs text-muted-foreground text-center w-full">
-                        &copy; {year} SimuCredit Pro.
+                        &copy; {isClient ? new Date().getFullYear() : ''} SimuCredit Pro.
                     </p>
                 </CardFooter>
             </Card>
