@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,11 @@ export function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { login } = useAppContext();
+    const [year, setYear] = useState<number | null>(null);
+
+    useEffect(() => {
+        setYear(new Date().getFullYear());
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -71,7 +76,7 @@ export function LoginPage() {
                 </CardContent>
                 <CardFooter>
                     <p className="text-xs text-muted-foreground text-center w-full">
-                        &copy; {new Date().getFullYear()} SimuCredit Pro.
+                        &copy; {year} SimuCredit Pro.
                     </p>
                 </CardFooter>
             </Card>
