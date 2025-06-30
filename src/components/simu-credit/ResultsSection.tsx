@@ -23,10 +23,11 @@ export function ResultsSection({ results, role }: ResultsSectionProps) {
                 <ResultsDisplay results={results} />
                 
                 {role === 'ADMIN' && (
-                    <ChargesBreakdown results={results} />
+                    <>
+                        <ChargesBreakdown results={results} />
+                        <AmortizationTable amortizationData={results.amortization} />
+                    </>
                 )}
-
-                <AmortizationTable amortizationData={results.amortization} />
             </CardContent>
         </Card>
     );
