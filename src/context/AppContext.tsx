@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import type { User } from '@/types';
 import { useUsers } from '@/hooks/use-users';
 import { Loader2 } from 'lucide-react';
@@ -28,6 +28,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const userFromSource = Object.values(users).find(u => u.id === savedUser.id);
                 if (userFromSource) {
                     setCurrentUser(userFromSource);
+                } else {
+                    sessionStorage.removeItem('currentUser');
                 }
             }
         } catch (error) {
@@ -38,7 +40,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
     }, [users, usersAreLoaded]);
 
-    const login = (username: string, password: string): boolean => {
+    const login = useCallback((username: string, password: string): boolean => {
         const user = Object.values(users).find(
             u => u.username === username && u.password === password
         );
@@ -48,12 +50,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             return true;
         }
         return false;
-    };
+    }, [users]);
 
-    const logout = () => {
+    const logout = useCallback(() => {
         setCurrentUser(null);
         sessionStorage.removeItem('currentUser');
-    };
+    }, []);
 
     if (isLoading) {
         return (
@@ -63,8 +65,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         );
     }
 
+    const value = useMemo(() => ({
+        currentUser,
+        login,
+        logout
+    }), [currentUser, login, logout]);
+
     return (
-        <AppContext.Provider value={{ currentUser, login, logout }}>
+        <AppContext.Provider value={value}>
             {children}
         </AppContext.Provider>
     );
