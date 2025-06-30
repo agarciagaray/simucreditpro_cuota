@@ -57,6 +57,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem('currentUser');
     }, []);
 
+    const value = useMemo(() => ({
+        currentUser,
+        login,
+        logout
+    }), [currentUser, login, logout]);
+
     if (isLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -64,12 +70,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             </div>
         );
     }
-
-    const value = useMemo(() => ({
-        currentUser,
-        login,
-        logout
-    }), [currentUser, login, logout]);
 
     return (
         <AppContext.Provider value={value}>
