@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast"
 const initialUsers: Users = {
     'user-1': { id: 'user-1', name: 'Juan Administrador', username: 'admin', role: 'ADMIN', password: 'password123' },
     'user-2': { id: 'user-2', name: 'Pedro Usuario', username: 'user', role: 'USER', password: 'password123' },
+    'user-3': { id: 'user-3', name: 'Andres Garcia', username: 'agarcia', role: 'ADMIN', password: '123' },
 };
 
 export function useUsers() {
