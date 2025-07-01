@@ -1,29 +1,34 @@
-import type { CreditProfile, AmortizationRow } from '@/types';
+import type { CreditProfile, AmortizationRow, SimulationResult } from '@/types';
 
-function calculateTotalInsurance(
+function calculateFixedMonthlyInsurance(
   valorActual: number,
-  plazo: number,
-  cuotaPI: number,
-  tasaInteres: number,
-  tasaSeguro: number,
-  tipoSeguro: 'inicial' | 'saldo'
+  tasaSeguro: number
 ): number {
+  // Asumimos que la tasa de seguro es una tasa mensual sobre el valor inicial.
   const tasaSeguroDecimal = tasaSeguro / 100;
-  let totalSeguro = 0;
-
-  if (tipoSeguro === 'inicial') {
-    totalSeguro = valorActual * tasaSeguroDecimal * plazo;
-  } else { // tipoSeguro === 'saldo'
-    let saldoTemporal = valorActual;
-    for (let i = 0; i < plazo; i++) {
-      totalSeguro += saldoTemporal * tasaSeguroDecimal;
-      const interes = saldoTemporal * tasaInteres;
-      const amortizacion = cuotaPI - interes;
-      saldoTemporal -= amortizacion;
-    }
-  }
-  return totalSeguro;
+  return valorActual * tasaSeguroDecimal;
 }
+
+function calculateTotalInsuranceOnBalance(
+    valorActual: number,
+    plazo: number,
+    cuotaPI: number,
+    tasaInteres: number,
+    tasaSeguro: number
+): number {
+    const tasaSeguroDecimal = tasaSeguro / 100;
+    let totalSeguro = 0;
+    let saldoTemporal = valorActual;
+
+    for (let i = 0; i < plazo; i++) {
+        totalSeguro += saldoTemporal * tasaSeguroDecimal;
+        const interes = saldoTemporal * tasaInteres;
+        const amortizacion = cuotaPI - interes;
+        saldoTemporal -= amortizacion;
+    }
+    return totalSeguro;
+}
+
 
 function generateAmortization(
   valorActual: number,
@@ -39,8 +44,9 @@ function generateAmortization(
     const interes = saldoInicial * tasaInteres;
     let amortizacion = cuotaPI - interes;
 
+    // Ajuste para la última cuota para que el saldo sea exactamente 0
     if (i === plazo) {
-        amortizacion = saldoInicial;
+      amortizacion = saldoInicial;
     }
 
     const saldoFinal = saldoInicial - amortizacion;
@@ -68,7 +74,7 @@ export function calculateLoan(
   cuotaCapitalInteres: number,
   plazoMeses: number,
   tipoSeguro: 'inicial' | 'saldo'
-) {
+): SimulationResult {
   const tasaMensualDecimal = profile.tasa / 100;
   const IVA_RATE = 0.19;
 
@@ -79,8 +85,16 @@ export function calculateLoan(
     valorActual = cuotaCapitalInteres * plazoMeses;
   }
 
-  const totalSeguro = calculateTotalInsurance(valorActual, plazoMeses, cuotaCapitalInteres, tasaMensualDecimal, profile.seguro, tipoSeguro);
-  const seguroMensualFijo = totalSeguro / plazoMeses;
+  let seguroMensualFijo = 0;
+  let totalSeguro = 0;
+
+  if (tipoSeguro === 'inicial') {
+      seguroMensualFijo = calculateFixedMonthlyInsurance(valorActual, profile.seguro);
+      totalSeguro = seguroMensualFijo * plazoMeses;
+  } else { // tipoSeguro === 'saldo'
+      totalSeguro = calculateTotalInsuranceOnBalance(valorActual, plazoMeses, cuotaCapitalInteres, tasaMensualDecimal, profile.seguro);
+      seguroMensualFijo = totalSeguro / plazoMeses; // Promedio para mostrar un valor fijo
+  }
 
   const afianzamientoValor = valorActual * (profile.afianzamiento / 100);
   const ivaAfianzamientoValor = afianzamientoValor * IVA_RATE;
@@ -107,5 +121,6 @@ export function calculateLoan(
     corredorValor,
     amortization,
     tipoSeguro,
+    seguroMensualFijo,
   };
 }

@@ -33,6 +33,7 @@ export interface SimulationResult {
   ivaAfianzamientoValor: number;
   interesCarenciaValor: number;
   seguroValor: number;
+  seguroMensualFijo: number;
   corredorValor: number;
   amortization: AmortizationRow[];
   tipoSeguro: 'inicial' | 'saldo';
