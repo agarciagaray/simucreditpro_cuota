@@ -54,7 +54,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
     };
     
     const exportPdf = () => {
-        if (amortization.length === 0) {
+        if (!results || amortization.length === 0) {
             toast({ title: "No hay datos para exportar", variant: 'destructive' });
             return;
         }
@@ -68,7 +68,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
         // --- HEADER ---
         doc.setFontSize(22);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor('#3B82F6');
+        doc.setTextColor('#3B82F6'); // theme.colors.primary
         doc.text('SimuCredit Pro', pageWidth / 2, 20, { align: 'center' });
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
@@ -78,7 +78,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
         doc.text(`Generado el: ${generationDate}`, pageWidth / 2, 33, { align: 'center' });
         doc.setDrawColor('#3B82F6');
         doc.setLineWidth(0.5);
-        doc.line(20, 38, pageWidth - 20, 38);
+        doc.line(14, 38, pageWidth - 14, 38);
 
         // --- SUMMARY CARDS ---
         autoTable(doc, {
@@ -97,51 +97,74 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
                 ],
             ],
             styles: { cellPadding: 5, lineWidth: 0.2, lineColor: [226, 232, 240] },
+            margin: { left: 14, right: 14 },
         });
 
         let finalY = (doc as any).lastAutoTable.finalY + 10;
-        
-        const tableThemeOptions = {
-            theme: 'striped',
-            headStyles: { fillColor: '#eef2ff', textColor: '#3B82F6', fontStyle: 'bold' },
-            willDrawCell: (data: any) => {
-                if (data.section === 'body' && data.column.index === 0) {
-                    data.cell.styles.fontStyle = 'bold';
-                }
-            },
-        };
 
-        // --- SIMULATION DETAILS ---
+        // --- DETAILS TITLE ---
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor('#3B82F6');
+        doc.text('Detalles de la Simulación', 14, finalY);
+        finalY += 6;
+
+        // --- DETAILS TABLE ---
         autoTable(doc, {
             startY: finalY,
-            head: [['Detalles de la Simulación']],
             body: [
                 ['Perfil de Crédito', results.perfil.name],
                 ['Monto Solicitado', formatCurrencyPdf(results.valorActual)],
                 ['Plazo', `${results.plazoMeses} meses`],
                 ['Tasa Interés N.M.V.', `${results.perfil.tasa.toFixed(2)}%`],
             ],
-            ...tableThemeOptions,
+            theme: 'plain',
+            styles: {
+                cellPadding: { top: 1.5, right: 4, bottom: 1.5, left: 4 },
+                fontSize: 9,
+            },
+            columnStyles: {
+                0: { halign: 'left', textColor: [64, 64, 64] },
+                1: { halign: 'right', textColor: [0,0,0], fontStyle: 'bold' },
+            },
+            alternateRowStyles: { fillColor: [241, 245, 249] }, // slate-100
+            margin: { left: 14, right: 14 },
         });
 
         finalY = (doc as any).lastAutoTable.finalY + 10;
 
-        // --- ADDITIONAL CHARGES ---
+        // --- CHARGES TITLE ---
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor('#3B82F6');
+        doc.text('Desglose de Cargos Adicionales', 14, finalY);
+        finalY += 6;
+
+        // --- CHARGES TABLE ---
         autoTable(doc, {
             startY: finalY,
-            head: [['Desglose de Cargos Adicionales']],
             body: [
                 [`Afianzamiento (${results.perfil.afianzamiento.toFixed(2)}%)`, formatCurrencyPdf(results.afianzamientoValor)],
-                [`IVA del Afianzamiento (19,00%)`, formatCurrencyPdf(results.ivaAfianzamientoValor)],
+                [`IVA del Afianzamiento (19.00%)`, formatCurrencyPdf(results.ivaAfianzamientoValor)],
                 [`Interés de Carencia (${results.perfil.diasCarencia} días)`, formatCurrencyPdf(results.interesCarenciaValor)],
                 [`Seguro (${results.perfil.seguro.toFixed(2)}%)`, formatCurrencyPdf(results.seguroValor)],
                 [`Corredor Autorizado (${results.perfil.corredor.toFixed(2)}%)`, formatCurrencyPdf(results.corredorValor)],
             ],
-            ...tableThemeOptions,
+            theme: 'plain',
+            styles: {
+                cellPadding: { top: 1.5, right: 4, bottom: 1.5, left: 4 },
+                fontSize: 9,
+            },
+            columnStyles: {
+                0: { halign: 'left', textColor: [64, 64, 64] },
+                1: { halign: 'right', textColor: [0,0,0], fontStyle: 'bold' },
+            },
+            alternateRowStyles: { fillColor: [241, 245, 249] },
+            margin: { left: 14, right: 14 },
         });
 
         finalY = (doc as any).lastAutoTable.finalY + 10;
-        
+
         // --- AMORTIZATION TABLE ---
         const amortizationBody = amortization.map(row => [
             row.periodo,
@@ -157,15 +180,16 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
             head: [['Periodo', 'Saldo Inicial', 'Interés', 'Cuota', 'Amortización', 'Saldo Final']],
             body: amortizationBody,
             theme: 'grid',
-            headStyles: { fillColor: '#eef2ff', textColor: '#3B82F6', fontStyle: 'bold' },
+            headStyles: { fillColor: '#3B82F6', textColor: '#FFFFFF', fontStyle: 'bold', halign: 'center' },
             columnStyles: {
-                0: { halign: 'center' },
+                0: { halign: 'center', cellWidth: 20 },
                 1: { halign: 'right' },
                 2: { halign: 'right' },
                 3: { halign: 'right' },
                 4: { halign: 'right' },
                 5: { halign: 'right' },
-            }
+            },
+            margin: { left: 14, right: 14 },
         });
 
         doc.save('reporte_simulacion_credito.pdf');
