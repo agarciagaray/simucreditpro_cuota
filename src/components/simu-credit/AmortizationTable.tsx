@@ -61,6 +61,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
 
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
         
         const formatForPdf = (value: number) => Math.round(value).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         const formatCurrencyPdf = (value: number) => `$ ${formatForPdf(value)}`;
@@ -204,6 +205,49 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
             margin: { left: 14, right: 14 },
         });
 
+        // --- FOOTER AND PAGE NUMBERS ---
+        const pageCount = doc.internal.getNumberOfPages();
+
+        // Add disclaimer to the last page
+        doc.setPage(pageCount);
+        let lastY = (doc as any).lastAutoTable.finalY;
+        
+        if (lastY > pageHeight - 40) {
+            doc.addPage();
+            lastY = 20;
+        }
+
+        lastY += 15;
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.2);
+        doc.line(14, lastY, pageWidth - 14, lastY);
+        lastY += 8;
+        
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(150);
+        doc.text(
+            'Este es un documento informativo y no representa una obligación contractual. Los valores son aproximados.',
+            pageWidth / 2,
+            lastY,
+            { align: 'center' }
+        );
+
+        // Add page numbers to all pages
+        const finalPageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= finalPageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(150);
+            doc.text(
+                `Pág. ${i} de ${finalPageCount}`,
+                pageWidth - 14,
+                pageHeight - 10,
+                { align: 'right' }
+            );
+        }
+        
         doc.save('reporte_simulacion_credito.pdf');
     };
 
