@@ -3,10 +3,11 @@ import { formatCurrency } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { FileSpreadsheet, FileText } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 type AmortizationTableProps = {
     results: SimulationResult;
@@ -16,7 +17,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
     const { toast } = useToast();
     const { amortization } = results;
 
-    const downloadCsv = () => {
+    const downloadExcel = () => {
         if (amortization.length === 0) {
             toast({
                 title: "No hay datos para descargar",
@@ -26,31 +27,68 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
             return;
         }
 
-        const headers = ["Periodo", "Saldo Inicial", "Capital + Interes", "Amortizacion", "Interes", "Seguro", "Cuota Total", "Saldo Final"];
-        const csvContent = [
-            headers.join(','),
-            ...amortization.map(row => [
-                row.periodo,
-                Math.round(row.saldoInicial),
-                Math.round(row.cuotaPI),
-                Math.round(row.amortizacion),
-                Math.round(row.interes),
-                Math.round(row.seguroPeriodo),
-                Math.round(row.cuotaTotal),
-                Math.round(row.saldoFinal)
-            ].join(','))
-        ].join('\n');
+        // Sheet 1: ResumenCredito
+        const summaryData = [
+            ['Concepto', 'Valor'],
+            ['Monto Desembolsado', results.valorAEntregar],
+            ['Monto Total del Préstamo', results.valorActual],
+            ['Cuota Fija Mensual', results.cuotaTotalFija],
+            ['---', '---'],
+            ['Desglose de Cargos Adicionales', null],
+            [`Afianzamiento (${results.perfil.afianzamiento.toFixed(2)}%)`, results.afianzamientoValor],
+            [`IVA del Afianzamiento (19.00%)`, results.ivaAfianzamientoValor],
+            [`Interés de Carencia (${results.perfil.diasCarencia} días)`, results.interesCarenciaValor],
+            [`Seguro Total (${results.perfil.seguro.toFixed(2)}%)`, results.seguroValor],
+            [`Comisión del Corredor (${results.perfil.corredor.toFixed(2)}%)`, results.corredorValor],
+        ];
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+        
+        summarySheet['!cols'] = [{ wch: 40 }, { wch: 20 }];
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", "tabla_amortizacion.csv");
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        summaryData.forEach((row, index) => {
+            if (index > 0 && typeof row[1] === 'number') {
+                const cellRef = XLSX.utils.encode_cell({c: 1, r: index});
+                if(summarySheet[cellRef]) {
+                   summarySheet[cellRef].t = 'n';
+                   summarySheet[cellRef].z = '$#,##0';
+                }
+            }
+        });
+
+        // Sheet 2: TablaAmortizacion
+        const amortizationHeaders = ["#", "Saldo Inicial", "Capital+Int.", "Amortización", "Interés", "Seguro", "Cuota Total", "Saldo Final"];
+        const amortizationBody = results.amortization.map(row => [
+            row.periodo,
+            row.saldoInicial,
+            row.cuotaPI,
+            row.amortizacion,
+            row.interes,
+            row.seguroPeriodo,
+            row.cuotaTotal,
+            row.saldoFinal
+        ]);
+
+        const amortizationSheet = XLSX.utils.aoa_to_sheet([amortizationHeaders, ...amortizationBody]);
+        
+        amortizationSheet['!cols'] = amortizationHeaders.map(() => ({wch: 15}));
+        
+        amortizationBody.forEach((row, rIndex) => {
+            row.forEach((cell, cIndex) => {
+                if (cIndex > 0) {
+                    const cellRef = XLSX.utils.encode_cell({c: cIndex, r: rIndex + 1});
+                     if(amortizationSheet[cellRef]) {
+                       amortizationSheet[cellRef].t = 'n';
+                       amortizationSheet[cellRef].z = '$#,##0';
+                     }
+                }
+            });
+        });
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, summarySheet, 'ResumenCredito');
+        XLSX.utils.book_append_sheet(wb, amortizationSheet, 'TablaAmortizacion');
+
+        XLSX.writeFile(wb, 'reporte_simulacion_credito.xlsx');
     };
     
     const exportPdf = () => {
@@ -246,8 +284,8 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
             <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-medium">Tabla de Amortización</h3>
                 <div className="flex gap-2">
-                    <Button onClick={downloadCsv} variant="outline" size="sm">
-                        <Download className="mr-2 h-4 w-4" />Descargar CSV
+                    <Button onClick={downloadExcel} variant="outline" size="sm">
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />Descargar Excel
                     </Button>
                     <Button variant="outline" size="sm" onClick={exportPdf}>
                         <FileText className="mr-2 h-4 w-4" />Exportar PDF
