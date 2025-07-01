@@ -206,18 +206,20 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
         });
 
         // --- FOOTER AND PAGE NUMBERS ---
-        const pageCount = doc.internal.getNumberOfPages();
-
-        // Add disclaimer to the last page
-        doc.setPage(pageCount);
         let lastY = (doc as any).lastAutoTable.finalY;
         
-        if (lastY > pageHeight - 40) {
+        // Check if there's enough space for the footer. If not, add a new page.
+        // The footer needs about 30 units of height.
+        if (lastY > pageHeight - 35) {
             doc.addPage();
-            lastY = 20;
+            lastY = 20; // Reset Y position for the new page
+        } else {
+            lastY += 15; // Add some margin if on the same page
         }
-
-        lastY += 15;
+        
+        // Ensure we are on the last page before drawing the footer.
+        doc.setPage(doc.internal.getNumberOfPages());
+        
         doc.setDrawColor(226, 232, 240); // slate-200
         doc.setLineWidth(0.2);
         doc.line(14, lastY, pageWidth - 14, lastY);
