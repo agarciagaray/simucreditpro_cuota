@@ -63,7 +63,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
         const pageWidth = doc.internal.pageSize.getWidth();
         
         const formatForPdf = (value: number) => value.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const formatCurrencyPdf = (value: number) => `$${formatForPdf(value)}`;
+        const formatCurrencyPdf = (value: number) => `$ ${formatForPdf(value)}`;
 
         // --- HEADER ---
         doc.setFontSize(22);
@@ -165,8 +165,8 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
 
         finalY = (doc as any).lastAutoTable.finalY + 10;
 
-        // --- AMORTIZATION TABLE ---
-        const amortizationBody = amortization.map(row => [
+        // --- AMORTIZATION TABLE (PDF Version) ---
+        const amortizationBodyPdf = amortization.map(row => [
             row.periodo,
             formatForPdf(row.saldoInicial),
             formatForPdf(row.interes),
@@ -176,9 +176,9 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
         ]);
 
         autoTable(doc, {
-            startY: finalY,
+            startY: finalY + 5,
             head: [['Periodo', 'Saldo Inicial', 'Interés', 'Cuota', 'Amortización', 'Saldo Final']],
-            body: amortizationBody,
+            body: amortizationBodyPdf,
             theme: 'grid',
             headStyles: { fillColor: '#3B82F6', textColor: '#FFFFFF', fontStyle: 'bold', halign: 'center' },
             columnStyles: {
@@ -230,7 +230,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
                                 <TableCell className="text-right">{formatCurrency(row.cuotaPI)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(row.amortizacion)}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(row.interes)}</TableCell>
-                                <TableCell className="text-right text-red-600">{formatCurrency(row.seguroPeriodo)}</TableCell>
+                                <TableCell className="text-right text-destructive">{formatCurrency(row.seguroPeriodo)}</TableCell>
                                 <TableCell className="text-right font-semibold">{formatCurrency(row.cuotaTotal)}</TableCell>
                                 <TableCell className="text-right font-semibold">{formatCurrency(row.saldoFinal)}</TableCell>
                             </TableRow>

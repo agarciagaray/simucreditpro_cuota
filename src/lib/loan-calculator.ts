@@ -2,10 +2,9 @@ import type { CreditProfile, AmortizationRow, SimulationResult } from '@/types';
 
 function calculateFixedMonthlyInsurance(
   valorActual: number,
-  tasaSeguro: number
+  tasaSeguroMensual: number
 ): number {
-  // Asumimos que la tasa de seguro es una tasa mensual sobre el valor inicial.
-  const tasaSeguroDecimal = tasaSeguro / 100;
+  const tasaSeguroDecimal = tasaSeguroMensual / 100;
   return valorActual * tasaSeguroDecimal;
 }
 
@@ -14,9 +13,9 @@ function calculateTotalInsuranceOnBalance(
     plazo: number,
     cuotaPI: number,
     tasaInteres: number,
-    tasaSeguro: number
+    tasaSeguroMensual: number
 ): number {
-    const tasaSeguroDecimal = tasaSeguro / 100;
+    const tasaSeguroDecimal = tasaSeguroMensual / 100;
     let totalSeguro = 0;
     let saldoTemporal = valorActual;
 
@@ -85,15 +84,17 @@ export function calculateLoan(
     valorActual = cuotaCapitalInteres * plazoMeses;
   }
 
+  // A Tasa de seguro en el perfil es mensual.
+  const tasaSeguroMensual = profile.seguro;
   let seguroMensualFijo = 0;
   let totalSeguro = 0;
 
   if (tipoSeguro === 'inicial') {
-      seguroMensualFijo = calculateFixedMonthlyInsurance(valorActual, profile.seguro);
+      seguroMensualFijo = calculateFixedMonthlyInsurance(valorActual, tasaSeguroMensual);
       totalSeguro = seguroMensualFijo * plazoMeses;
   } else { // tipoSeguro === 'saldo'
-      totalSeguro = calculateTotalInsuranceOnBalance(valorActual, plazoMeses, cuotaCapitalInteres, tasaMensualDecimal, profile.seguro);
-      seguroMensualFijo = totalSeguro / plazoMeses; // Promedio para mostrar un valor fijo
+      totalSeguro = calculateTotalInsuranceOnBalance(valorActual, plazoMeses, cuotaCapitalInteres, tasaMensualDecimal, tasaSeguroMensual);
+      seguroMensualFijo = totalSeguro / plazoMeses;
   }
 
   const afianzamientoValor = valorActual * (profile.afianzamiento / 100);
