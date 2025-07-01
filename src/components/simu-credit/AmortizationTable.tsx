@@ -4,7 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Download, FileText } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 type AmortizationTableProps = {
     amortizationData: AmortizationRow[];
@@ -49,6 +51,63 @@ export function AmortizationTable({ amortizationData }: AmortizationTableProps) 
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
+    
+    const exportPdf = () => {
+        if (amortizationData.length === 0) {
+            toast({
+                title: "No hay datos para exportar",
+                description: "Realice un cálculo primero.",
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        const doc = new jsPDF();
+        
+        const tableColumns = ['Periodo', 'Saldo Inicial', 'Interés', 'Cuota', 'Amortización', 'Saldo Final'];
+        
+        const formatForPdf = (value: number) => value.toLocaleString('es-CO', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+        
+        const tableRows = amortizationData.map(row => [
+            row.periodo.toString(),
+            formatForPdf(row.saldoInicial),
+            formatForPdf(row.interes),
+            formatForPdf(row.cuotaPI),
+            formatForPdf(row.amortizacion),
+            formatForPdf(row.saldoFinal),
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumns],
+            body: tableRows,
+            theme: 'grid',
+            columnStyles: {
+                0: { halign: 'center' },
+                1: { halign: 'right' },
+                2: { halign: 'right' },
+                3: { halign: 'right' },
+                4: { halign: 'right' },
+                5: { halign: 'right' },
+            },
+            didDrawPage: (data) => {
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const pageWidth = doc.internal.pageSize.getWidth();
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text(
+                    'Este es un documento informativo y no representa una obligación contractual. Los valores son aproximados.',
+                    pageWidth / 2,
+                    pageHeight - 10,
+                    { align: 'center' }
+                );
+            }
+        });
+        
+        doc.save('tabla_amortizacion.pdf');
+    };
 
     return (
         <div>
@@ -58,7 +117,7 @@ export function AmortizationTable({ amortizationData }: AmortizationTableProps) 
                     <Button onClick={downloadCsv} variant="outline" size="sm">
                         <Download className="mr-2 h-4 w-4" />Descargar CSV
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => toast({ title: 'Función no implementada', description: 'La exportación a PDF estará disponible próximamente.' })}>
+                    <Button variant="outline" size="sm" onClick={exportPdf}>
                         <FileText className="mr-2 h-4 w-4" />Exportar PDF
                     </Button>
                 </div>
