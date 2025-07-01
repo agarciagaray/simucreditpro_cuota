@@ -205,40 +205,28 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
             margin: { left: 14, right: 14 },
         });
 
-        // --- FOOTER AND PAGE NUMBERS ---
-        let lastY = (doc as any).lastAutoTable.finalY;
-        
-        // Check if there's enough space for the footer. If not, add a new page.
-        // The footer needs about 30 units of height.
-        if (lastY > pageHeight - 35) {
-            doc.addPage();
-            lastY = 20; // Reset Y position for the new page
-        } else {
-            lastY += 15; // Add some margin if on the same page
-        }
-        
-        // Ensure we are on the last page before drawing the footer.
-        doc.setPage(doc.internal.getNumberOfPages());
-        
-        doc.setDrawColor(226, 232, 240); // slate-200
-        doc.setLineWidth(0.2);
-        doc.line(14, lastY, pageWidth - 14, lastY);
-        lastY += 8;
-        
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(150);
-        doc.text(
-            'Este es un documento informativo y no representa una obligación contractual. Los valores son aproximados.',
-            pageWidth / 2,
-            lastY,
-            { align: 'center' }
-        );
-
-        // Add page numbers to all pages
+        // --- FOOTER ON ALL PAGES ---
         const finalPageCount = doc.internal.getNumberOfPages();
         for (let i = 1; i <= finalPageCount; i++) {
             doc.setPage(i);
+
+            // Draw line
+            doc.setDrawColor(226, 232, 240); // slate-200
+            doc.setLineWidth(0.2);
+            doc.line(14, pageHeight - 18, pageWidth - 14, pageHeight - 18);
+
+            // Add informational text (left aligned)
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(150);
+            doc.text(
+                'Este es un documento informativo y no representa una obligación contractual. Los valores son aproximados.',
+                14,
+                pageHeight - 10,
+                { align: 'left' }
+            );
+
+            // Add page number (right aligned)
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(150);
