@@ -62,7 +62,7 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
         
-        const formatForPdf = (value: number) => value.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formatForPdf = (value: number) => Math.round(value).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         const formatCurrencyPdf = (value: number) => `$ ${formatForPdf(value)}`;
 
         // --- HEADER ---
@@ -86,13 +86,15 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
             theme: 'grid',
             body: [
                 [
-                    { content: 'TOTAL PRÉSTAMO', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6' } },
-                    { content: 'CUOTA FIJA MENSUAL', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6' } },
-                    { content: 'VALOR DESEMBOLSADO', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6' } },
+                    { content: 'TOTAL PRÉSTAMO', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6', fontStyle: 'bold' } },
+                    { content: 'CUOTA FIJA MENSUAL', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6', fontStyle: 'bold' } },
+                    { content: 'VALOR SEGURO MENSUAL', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6', fontStyle: 'bold' } },
+                    { content: 'VALOR A ENTREGAR', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6', fontStyle: 'bold' } },
                 ],
                 [
                     { content: formatCurrencyPdf(results.valorActual), styles: { halign: 'center', fontSize: 14, fontStyle: 'bold' } },
                     { content: formatCurrencyPdf(results.cuotaTotalFija), styles: { halign: 'center', fontSize: 14, fontStyle: 'bold' } },
+                    { content: formatCurrencyPdf(results.seguroMensualFijo), styles: { halign: 'center', fontSize: 14, fontStyle: 'bold' } },
                     { content: formatCurrencyPdf(results.valorAEntregar), styles: { halign: 'center', fontSize: 14, fontStyle: 'bold' } },
                 ],
             ],
@@ -169,25 +171,35 @@ export function AmortizationTable({ results }: AmortizationTableProps) {
         const amortizationBodyPdf = amortization.map(row => [
             row.periodo,
             formatForPdf(row.saldoInicial),
-            formatForPdf(row.interes),
             formatForPdf(row.cuotaPI),
             formatForPdf(row.amortizacion),
-            formatForPdf(row.saldoFinal),
+            formatForPdf(row.interes),
+            formatForPdf(row.seguroPeriodo),
+            formatForPdf(row.cuotaTotal),
+            formatForPdf(row.saldoFinal)
         ]);
+        
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor('#3B82F6');
+        doc.text('Tabla de Amortización', 14, finalY);
 
         autoTable(doc, {
             startY: finalY + 5,
-            head: [['Periodo', 'Saldo Inicial', 'Interés', 'Cuota', 'Amortización', 'Saldo Final']],
+            head: [['#', 'S. Inicial', 'Cap+Int', 'Amort.', 'Interés', 'Seguro', 'Cuota T.', 'S. Final']],
             body: amortizationBodyPdf,
             theme: 'grid',
-            headStyles: { fillColor: '#3B82F6', textColor: '#FFFFFF', fontStyle: 'bold', halign: 'center' },
+            headStyles: { fillColor: '#3B82F6', textColor: '#FFFFFF', fontStyle: 'bold', halign: 'center', fontSize: 8 },
+            styles: { fontSize: 8, cellPadding: 2 },
             columnStyles: {
-                0: { halign: 'center', cellWidth: 20 },
+                0: { halign: 'center' },
                 1: { halign: 'right' },
                 2: { halign: 'right' },
                 3: { halign: 'right' },
                 4: { halign: 'right' },
                 5: { halign: 'right' },
+                6: { halign: 'right' },
+                7: { halign: 'right' },
             },
             margin: { left: 14, right: 14 },
         });
