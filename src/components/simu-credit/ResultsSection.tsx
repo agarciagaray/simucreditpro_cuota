@@ -25,7 +25,7 @@ export function ResultsSection({ results, role }: ResultsSectionProps) {
                 {role === 'ADMIN' && (
                     <>
                         <ChargesBreakdown results={results} />
-                        <AmortizationTable amortizationData={results.amortization} />
+                        <AmortizationTable results={results} />
                     </>
                 )}
             </CardContent>

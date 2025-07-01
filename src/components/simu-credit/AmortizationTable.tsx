@@ -1,4 +1,4 @@
-import type { AmortizationRow } from '@/types';
+import type { SimulationResult } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,14 +9,15 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 type AmortizationTableProps = {
-    amortizationData: AmortizationRow[];
+    results: SimulationResult;
 };
 
-export function AmortizationTable({ amortizationData }: AmortizationTableProps) {
+export function AmortizationTable({ results }: AmortizationTableProps) {
     const { toast } = useToast();
+    const { amortization } = results;
 
     const downloadCsv = () => {
-        if (amortizationData.length === 0) {
+        if (amortization.length === 0) {
             toast({
                 title: "No hay datos para descargar",
                 description: "Realice un cálculo primero.",
@@ -28,7 +29,7 @@ export function AmortizationTable({ amortizationData }: AmortizationTableProps) 
         const headers = ["Periodo", "Saldo Inicial", "Capital + Interes", "Amortizacion", "Interes", "Seguro", "Cuota Total", "Saldo Final"];
         const csvContent = [
             headers.join(','),
-            ...amortizationData.map(row => [
+            ...amortization.map(row => [
                 row.periodo,
                 Math.round(row.saldoInicial),
                 Math.round(row.cuotaPI),
@@ -53,26 +54,97 @@ export function AmortizationTable({ amortizationData }: AmortizationTableProps) 
     };
     
     const exportPdf = () => {
-        if (amortizationData.length === 0) {
-            toast({
-                title: "No hay datos para exportar",
-                description: "Realice un cálculo primero.",
-                variant: 'destructive',
-            });
+        if (amortization.length === 0) {
+            toast({ title: "No hay datos para exportar", variant: 'destructive' });
             return;
         }
 
         const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
         
-        const tableColumns = ['Periodo', 'Saldo Inicial', 'Interés', 'Cuota', 'Amortización', 'Saldo Final'];
-        
-        const formatForPdf = (value: number) => value.toLocaleString('es-CO', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+        const formatForPdf = (value: number) => value.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formatCurrencyPdf = (value: number) => `$${formatForPdf(value)}`;
+
+        // --- HEADER ---
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor('#3B82F6');
+        doc.text('SimuCredit Pro', pageWidth / 2, 20, { align: 'center' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text('Reporte de Simulación de Crédito', pageWidth / 2, 28, { align: 'center' });
+        const generationDate = new Date().toLocaleString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        doc.text(`Generado el: ${generationDate}`, pageWidth / 2, 33, { align: 'center' });
+        doc.setDrawColor('#3B82F6');
+        doc.setLineWidth(0.5);
+        doc.line(20, 38, pageWidth - 20, 38);
+
+        // --- SUMMARY CARDS ---
+        autoTable(doc, {
+            startY: 45,
+            theme: 'grid',
+            body: [
+                [
+                    { content: 'TOTAL PRÉSTAMO', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6' } },
+                    { content: 'CUOTA FIJA MENSUAL', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6' } },
+                    { content: 'VALOR DESEMBOLSADO', styles: { halign: 'center', fontSize: 8, textColor: '#3B82F6' } },
+                ],
+                [
+                    { content: formatCurrencyPdf(results.valorActual), styles: { halign: 'center', fontSize: 14, fontStyle: 'bold' } },
+                    { content: formatCurrencyPdf(results.cuotaTotalFija), styles: { halign: 'center', fontSize: 14, fontStyle: 'bold' } },
+                    { content: formatCurrencyPdf(results.valorAEntregar), styles: { halign: 'center', fontSize: 14, fontStyle: 'bold' } },
+                ],
+            ],
+            styles: { cellPadding: 5, lineWidth: 0.2, lineColor: [226, 232, 240] },
         });
+
+        let finalY = (doc as any).lastAutoTable.finalY + 10;
         
-        const tableRows = amortizationData.map(row => [
-            row.periodo.toString(),
+        const tableThemeOptions = {
+            theme: 'striped',
+            headStyles: { fillColor: '#eef2ff', textColor: '#3B82F6', fontStyle: 'bold' },
+            willDrawCell: (data: any) => {
+                if (data.section === 'body' && data.column.index === 0) {
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            },
+        };
+
+        // --- SIMULATION DETAILS ---
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Detalles de la Simulación']],
+            body: [
+                ['Perfil de Crédito', results.perfil.name],
+                ['Monto Solicitado', formatCurrencyPdf(results.valorActual)],
+                ['Plazo', `${results.plazoMeses} meses`],
+                ['Tasa Interés N.M.V.', `${results.perfil.tasa.toFixed(2)}%`],
+            ],
+            ...tableThemeOptions,
+        });
+
+        finalY = (doc as any).lastAutoTable.finalY + 10;
+
+        // --- ADDITIONAL CHARGES ---
+        autoTable(doc, {
+            startY: finalY,
+            head: [['Desglose de Cargos Adicionales']],
+            body: [
+                [`Afianzamiento (${results.perfil.afianzamiento.toFixed(2)}%)`, formatCurrencyPdf(results.afianzamientoValor)],
+                [`IVA del Afianzamiento (19,00%)`, formatCurrencyPdf(results.ivaAfianzamientoValor)],
+                [`Interés de Carencia (${results.perfil.diasCarencia} días)`, formatCurrencyPdf(results.interesCarenciaValor)],
+                [`Seguro (${results.perfil.seguro.toFixed(2)}%)`, formatCurrencyPdf(results.seguroValor)],
+                [`Corredor Autorizado (${results.perfil.corredor.toFixed(2)}%)`, formatCurrencyPdf(results.corredorValor)],
+            ],
+            ...tableThemeOptions,
+        });
+
+        finalY = (doc as any).lastAutoTable.finalY + 10;
+        
+        // --- AMORTIZATION TABLE ---
+        const amortizationBody = amortization.map(row => [
+            row.periodo,
             formatForPdf(row.saldoInicial),
             formatForPdf(row.interes),
             formatForPdf(row.cuotaPI),
@@ -81,9 +153,11 @@ export function AmortizationTable({ amortizationData }: AmortizationTableProps) 
         ]);
 
         autoTable(doc, {
-            head: [tableColumns],
-            body: tableRows,
+            startY: finalY,
+            head: [['Periodo', 'Saldo Inicial', 'Interés', 'Cuota', 'Amortización', 'Saldo Final']],
+            body: amortizationBody,
             theme: 'grid',
+            headStyles: { fillColor: '#eef2ff', textColor: '#3B82F6', fontStyle: 'bold' },
             columnStyles: {
                 0: { halign: 'center' },
                 1: { halign: 'right' },
@@ -91,22 +165,10 @@ export function AmortizationTable({ amortizationData }: AmortizationTableProps) 
                 3: { halign: 'right' },
                 4: { halign: 'right' },
                 5: { halign: 'right' },
-            },
-            didDrawPage: (data) => {
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const pageWidth = doc.internal.pageSize.getWidth();
-                doc.setFontSize(8);
-                doc.setTextColor(150);
-                doc.text(
-                    'Este es un documento informativo y no representa una obligación contractual. Los valores son aproximados.',
-                    pageWidth / 2,
-                    pageHeight - 10,
-                    { align: 'center' }
-                );
             }
         });
-        
-        doc.save('tabla_amortizacion.pdf');
+
+        doc.save('reporte_simulacion_credito.pdf');
     };
 
     return (
@@ -137,7 +199,7 @@ export function AmortizationTable({ amortizationData }: AmortizationTableProps) 
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {amortizationData.map((row) => (
+                        {amortization.map((row) => (
                             <TableRow key={row.periodo}>
                                 <TableCell className="font-medium text-center">{row.periodo}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(row.saldoInicial)}</TableCell>

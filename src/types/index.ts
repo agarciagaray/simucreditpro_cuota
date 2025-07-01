@@ -28,6 +28,7 @@ export interface SimulationResult {
   cuotaTotalFija: number;
   valorAEntregar: number;
   perfil: CreditProfile;
+  plazoMeses: number;
   afianzamientoValor: number;
   ivaAfianzamientoValor: number;
   interesCarenciaValor: number;

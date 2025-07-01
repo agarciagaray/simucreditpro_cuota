@@ -99,6 +99,7 @@ export function calculateLoan(
     cuotaTotalFija,
     valorAEntregar,
     perfil: profile,
+    plazoMeses,
     afianzamientoValor,
     ivaAfianzamientoValor,
     interesCarenciaValor,
