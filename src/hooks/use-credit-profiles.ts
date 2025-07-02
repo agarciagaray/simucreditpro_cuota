@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { CreditProfiles, CreditProfile } from '@/types';
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
+import type { CreditProfile, CreditProfiles } from '@/types';
+import { useEffect, useState } from 'react';
 
 const initialCreditProfiles: CreditProfiles = {
-    'A': { id: 'A', name: 'Perfil A', tasa: 1.91, afianzamiento: 16.00, diasCarencia: 60, seguro: 0.45, corredor: 7.00 },
-    'B': { id: 'B', name: 'Perfil B', tasa: 1.91, afianzamiento: 20.00, diasCarencia: 60, seguro: 0.45, corredor: 7.00 },
-    'C': { id: 'C', name: 'Perfil C', tasa: 1.91, afianzamiento: 24.00, diasCarencia: 60, seguro: 1.40, corredor: 7.00 }
+    'A': { id: 'A', name: 'Perfil A', tasa: 1.91, afianzamiento: 16.00, diasCarencia: 60, seguro: 0.45, corredor: 7.00, afiliacionCooperativa: 7000, aportesMensualesCooperativa: 3374 },
+    'B': { id: 'B', name: 'Perfil B', tasa: 1.91, afianzamiento: 20.00, diasCarencia: 60, seguro: 0.45, corredor: 7.00, afiliacionCooperativa: 7000, aportesMensualesCooperativa: 3374 },
+    'C': { id: 'C', name: 'Perfil C', tasa: 1.91, afianzamiento: 24.00, diasCarencia: 60, seguro: 1.40, corredor: 7.00, afiliacionCooperativa: 7000, aportesMensualesCooperativa: 3374 }
 };
 
 export function useCreditProfiles() {
@@ -36,7 +36,7 @@ export function useCreditProfiles() {
         setProfiles(newProfiles);
         localStorage.setItem('creditProfiles', JSON.stringify(newProfiles));
     };
-    
+
     const addProfile = (newProfileData: Omit<CreditProfile, 'id'>) => {
         const newId = `P${Date.now()}`;
         const profileWithId: CreditProfile = { ...newProfileData, id: newId };

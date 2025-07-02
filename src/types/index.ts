@@ -6,6 +6,8 @@ export interface CreditProfile {
   diasCarencia: number;
   seguro: number;
   corredor: number;
+  afiliacionCooperativa: number;
+  aportesMensualesCooperativa: number;
 }
 
 export interface CreditProfiles {
@@ -37,6 +39,8 @@ export interface SimulationResult {
   corredorValor: number;
   amortization: AmortizationRow[];
   tipoSeguro: 'inicial' | 'saldo';
+  afiliacionCooperativaValor: number;
+  aportesMensualesCooperativaValor: number;
 }
 
 export interface User {

@@ -1,4 +1,4 @@
-import type { CreditProfile, AmortizationRow, SimulationResult } from '@/types';
+import type { AmortizationRow, CreditProfile, SimulationResult } from '@/types';
 
 function calculateFixedMonthlyInsurance(
   valorActual: number,
@@ -9,23 +9,23 @@ function calculateFixedMonthlyInsurance(
 }
 
 function calculateTotalInsuranceOnBalance(
-    valorActual: number,
-    plazo: number,
-    cuotaPI: number,
-    tasaInteres: number,
-    tasaSeguroMensual: number
+  valorActual: number,
+  plazo: number,
+  cuotaPI: number,
+  tasaInteres: number,
+  tasaSeguroMensual: number
 ): number {
-    const tasaSeguroDecimal = tasaSeguroMensual / 100;
-    let totalSeguro = 0;
-    let saldoTemporal = valorActual;
+  const tasaSeguroDecimal = tasaSeguroMensual / 100;
+  let totalSeguro = 0;
+  let saldoTemporal = valorActual;
 
-    for (let i = 0; i < plazo; i++) {
-        totalSeguro += saldoTemporal * tasaSeguroDecimal;
-        const interes = saldoTemporal * tasaInteres;
-        const amortizacion = cuotaPI - interes;
-        saldoTemporal -= amortizacion;
-    }
-    return totalSeguro;
+  for (let i = 0; i < plazo; i++) {
+    totalSeguro += saldoTemporal * tasaSeguroDecimal;
+    const interes = saldoTemporal * tasaInteres;
+    const amortizacion = cuotaPI - interes;
+    saldoTemporal -= amortizacion;
+  }
+  return totalSeguro;
 }
 
 
@@ -90,11 +90,11 @@ export function calculateLoan(
   let totalSeguro = 0;
 
   if (tipoSeguro === 'inicial') {
-      seguroMensualFijo = calculateFixedMonthlyInsurance(valorActual, tasaSeguroMensual);
-      totalSeguro = seguroMensualFijo * plazoMeses;
+    seguroMensualFijo = calculateFixedMonthlyInsurance(valorActual, tasaSeguroMensual);
+    totalSeguro = seguroMensualFijo * plazoMeses;
   } else { // tipoSeguro === 'saldo'
-      totalSeguro = calculateTotalInsuranceOnBalance(valorActual, plazoMeses, cuotaCapitalInteres, tasaMensualDecimal, tasaSeguroMensual);
-      seguroMensualFijo = totalSeguro / plazoMeses;
+    totalSeguro = calculateTotalInsuranceOnBalance(valorActual, plazoMeses, cuotaCapitalInteres, tasaMensualDecimal, tasaSeguroMensual);
+    seguroMensualFijo = totalSeguro / plazoMeses;
   }
 
   const afianzamientoValor = valorActual * (profile.afianzamiento / 100);
@@ -102,11 +102,14 @@ export function calculateLoan(
   const interesCarenciaValor = valorActual * (tasaMensualDecimal / 30) * profile.diasCarencia;
   const corredorValor = valorActual * (profile.corredor / 100);
 
-  const totalAdicionalesNoSeguro = afianzamientoValor + ivaAfianzamientoValor + interesCarenciaValor + corredorValor;
+  const afiliacionCooperativaValor = profile.afiliacionCooperativa;
+  const aportesMensualesCooperativaValor = profile.aportesMensualesCooperativa * plazoMeses;
+
+  const totalAdicionalesNoSeguro = afianzamientoValor + ivaAfianzamientoValor + interesCarenciaValor + corredorValor + afiliacionCooperativaValor + aportesMensualesCooperativaValor;
   const valorAEntregar = valorActual - totalAdicionalesNoSeguro;
 
   const amortization = generateAmortization(valorActual, plazoMeses, cuotaCapitalInteres, tasaMensualDecimal, seguroMensualFijo);
-  
+
   const cuotaTotalFija = cuotaCapitalInteres + seguroMensualFijo;
 
   return {
@@ -123,5 +126,7 @@ export function calculateLoan(
     amortization,
     tipoSeguro,
     seguroMensualFijo,
+    afiliacionCooperativaValor,
+    aportesMensualesCooperativaValor,
   };
 }
