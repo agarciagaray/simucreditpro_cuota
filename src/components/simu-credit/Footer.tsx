@@ -18,19 +18,20 @@ export function Footer() {
   }, []);
 
   return (
-    <footer className="bg-gray-800 text-white py-3">
-      <div className="container mx-auto px-4 text-center">
-        <p>
-          &copy; {isClient ? new Date().getFullYear() : ""} SimuCredit Pro.
-          Todos los derechos reservados.
-        </p>
-        <p className="text-gray-400 text-xs mt-0.5">
-          Simulador de créditos y cálculo de amortización
-        </p>
-        <div className="flex flex-col sm:flex-row gap-1 justify-center items-center mt-2">
+    <footer className="bg-skote-dark text-white border-t border-skote-secondary/20 font-poppins py-2">
+      <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between min-h-[56px]">
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <span className="text-base font-bold tracking-tight">
+            &copy; {isClient ? new Date().getFullYear() : ""} SimuCredit Pro
+          </span>
+          <span className="text-skote-secondary text-xs font-normal">
+            Simulador de créditos y cálculo de amortización
+          </span>
+        </div>
+        <div className="flex flex-row gap-4 items-center mt-2 sm:mt-0">
           <Dialog>
             <DialogTrigger asChild>
-              <button className="underline text-blue-300 hover:text-blue-100 transition">
+              <button className="text-skote-primary font-semibold underline underline-offset-4 hover:text-white transition text-xs sm:text-sm">
                 Términos y condiciones de uso
               </button>
             </DialogTrigger>
@@ -48,7 +49,7 @@ export function Footer() {
           </Dialog>
           <Dialog>
             <DialogTrigger asChild>
-              <button className="underline text-blue-300 hover:text-blue-100 transition">
+              <button className="text-skote-primary font-semibold underline underline-offset-4 hover:text-white transition text-xs sm:text-sm">
                 Privacidad y Protección de Datos
               </button>
             </DialogTrigger>

@@ -1,4 +1,4 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -10,9 +10,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['Poppins', 'sans-serif'],
+        headline: ['Poppins', 'sans-serif'],
         code: ['monospace'],
+        poppins: ['Poppins', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -64,6 +65,17 @@ export default {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
+        },
+        skote: {
+          primary: '#556ee6',
+          success: '#34c38f',
+          info: '#50a5f1',
+          warning: '#f1b44c',
+          danger: '#f46a6a',
+          dark: '#343a40',
+          secondary: '#74788d',
+          'background-main': '#f8f8fb',
+          'card-bg': '#ffffff',
         },
       },
       borderRadius: {
